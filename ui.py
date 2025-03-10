@@ -72,8 +72,8 @@ def enhance_query(query, model_name):
     
     return enhanced_query
 
-def create_chatbot_retrieval_qa(main_query, additional_note, vs, categories, sub_categories, model_name, use_query_enhancement=False):
-    """Modified to handle query enhancement, model selection, and more."""
+def create_chatbot_retrieval_qa(main_query, additional_note, vs, categories, sub_categories, model_name):
+    """Modified to handle query enhancement and model selection."""
     prompt_template = """
     شما یک دستیار هوشمند و مفید هستید. با استفاده از متن زیر به پرسش مطرح‌شده با دقت، شفافیت، و به صورت کامل پاسخ دهید:
     1. پاسخ را **به زبان فارسی** ارائه دهید.
@@ -104,21 +104,11 @@ def create_chatbot_retrieval_qa(main_query, additional_note, vs, categories, sub
             if sub_categories:
                 filter_dict["year"] = {"$in": sub_categories}
         
-        # Apply query enhancement if enabled
-        if use_query_enhancement:
-            enhanced_query = enhance_query(query, model_name)
-            # For debugging - log the enhancement
-            if st.session_state.debug_mode:
-                st.session_state.debug_info.append({
-                    "original_query": query,
-                    "enhanced_query": enhanced_query
-                })
-            query_to_use = enhanced_query
-        else:
-            query_to_use = query
+        # Always enhance the query
+        enhanced_query = enhance_query(query, model_name)
         
         return vs.get_relevant_documents(
-            query_to_use,
+            enhanced_query,
             filter=filter_dict
         )
 
@@ -198,13 +188,6 @@ st.markdown("""
             text-align: right;
             direction: rtl;
         }
-        .debug-box {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin: 10px 0;
-            background-color: #f9f9f9;
-            border-radius: 5px;
-        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -219,7 +202,6 @@ def get_selected_subfolders(selected_folders):
     for folder in selected_folders:
         if folder in folder_dict:
             subfolder_list.extend(folder_dict[folder])
-      # Add all subfolders to the list
     return subfolder_list
 
 def main():
@@ -236,12 +218,6 @@ def main():
         st.session_state.vectorstore = None
     if 'model_name' not in st.session_state:
         st.session_state.model_name = "gpt-4o-mini"
-    if 'use_query_enhancement' not in st.session_state:
-        st.session_state.use_query_enhancement = False
-    if 'debug_mode' not in st.session_state:
-        st.session_state.debug_mode = False
-    if 'debug_info' not in st.session_state:
-        st.session_state.debug_info = []
 
     # Predefined categories
     with open("folder_structure.json", "r", encoding="utf-8") as file:
@@ -294,41 +270,23 @@ def main():
             
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # Model selection and Query Enhancement options
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Model selection
-        model_options = {
+    # Model selection only
+    # Model selection
+    model_options = {
         "gpt-4o-mini": "GPT-4o Mini",
         "o3-mini": "O3 Mini",
         "o1": "O1",
-        }
-        
-        selected_model = st.selectbox(
-            "انتخاب مدل هوش مصنوعی:",
-            options=list(model_options.keys()),
-            format_func=lambda x: model_options[x],
-            index=list(model_options.keys()).index(st.session_state.model_name)
-        )
-        
-        # Update session state with selected model
-        st.session_state.model_name = selected_model
-
-    with col2:
-        # Query enhancement toggle
-        st.session_state.use_query_enhancement = st.checkbox(
-            "فعال‌سازی بهبود پرسش با هوش مصنوعی",
-            value=st.session_state.use_query_enhancement,
-            help="این گزینه از هوش مصنوعی برای بهبود پرسش شما قبل از جستجو استفاده می‌کند"
-        )
-        
-        # Debug mode toggle (for developers)
-        st.session_state.debug_mode = st.checkbox(
-            "حالت عیب‌یابی (برای توسعه‌دهندگان)",
-            value=st.session_state.debug_mode,
-            help="نمایش اطلاعات عیب‌یابی مانند پرسش اصلی و پرسش بهبود یافته"
-        )
+    }
+    
+    selected_model = st.selectbox(
+        "انتخاب مدل هوش مصنوعی:",
+        options=list(model_options.keys()),
+        format_func=lambda x: model_options[x],
+        index=list(model_options.keys()).index(st.session_state.model_name)
+    )
+    
+    # Update session state with selected model
+    st.session_state.model_name = selected_model
 
     # Initialize chatbot if needed
     if st.session_state.vectorstore is None:
@@ -370,9 +328,7 @@ def main():
     )
 
     # Display current model and settings
-    settings_info = f"مدل انتخاب شده: {model_options[st.session_state.model_name]}"
-    if st.session_state.use_query_enhancement:
-        settings_info += " | بهبود پرسش با هوش مصنوعی: فعال"
+    settings_info = f"مدل انتخاب شده: {model_options[st.session_state.model_name]} | بهبود پرسش با هوش مصنوعی: فعال"
     st.info(settings_info)
 
     # Submit button
@@ -388,9 +344,6 @@ def main():
             return
         
         response_placeholder = st.empty()
-        
-        # Clear previous debug info
-        st.session_state.debug_info = []
 
         try:
             # Show loading spinner
@@ -410,8 +363,7 @@ def main():
                     st.session_state.vectorstore,
                     categories,
                     sub_categories,
-                    st.session_state.model_name,  # Pass the selected model
-                    st.session_state.use_query_enhancement  # Pass query enhancement flag
+                    st.session_state.model_name  # Pass the selected model
                 )
                 
                 # Update progress for processing
@@ -436,17 +388,6 @@ def main():
                 # Display response
                 response_placeholder.markdown("**پاسخ:**")
                 response_placeholder.write(response)
-                
-                # Show debug information if debug mode is enabled
-                if st.session_state.debug_mode and st.session_state.debug_info:
-                    st.markdown("### اطلاعات عیب‌یابی")
-                    for item in st.session_state.debug_info:
-                        st.markdown("<div class='debug-box'>", unsafe_allow_html=True)
-                        st.markdown("**پرسش اصلی:**")
-                        st.markdown(f"`{item['original_query']}`")
-                        st.markdown("**پرسش بهبود یافته:**")
-                        st.markdown(f"`{item['enhanced_query']}`")
-                        st.markdown("</div>", unsafe_allow_html=True)
 
         except Exception as e:
             st.error(f"خطا در پردازش سوال: {e}")
