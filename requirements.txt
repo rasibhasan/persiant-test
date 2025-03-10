@@ -1,0 +1,11 @@
+streamlit
+openai
+langchain
+langchain_openai
+pinecone-client
+langchain_community
+pinecone-text
+huggingface-hub
+rank_bm25
+langchain-pinecone
+nltk
