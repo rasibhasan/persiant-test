@@ -89,11 +89,11 @@ def create_chatbot_retrieval_qa(main_query, additional_note, vs, categories, sub
     {main_question}
 
     **یادداشت اضافی:**
-    {additional_note}
+    {additional_note}s
     """
     after_rag_prompt = ChatPromptTemplate.from_template(prompt_template)
 
-    llm = ChatOpenAI(model=model_name, temperature=0.1, api_key=OPENAI_API_KEY)
+    llm = ChatOpenAI(model=model_name, api_key=OPENAI_API_KEY)
 
     def filtered_retriever(query):
         filter_dict = {}
