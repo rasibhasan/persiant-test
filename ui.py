@@ -129,7 +129,7 @@ def create_chatbot_retrieval_qa(main_query, additional_note, vs, categories, sub
 def initialize_chatbot(alpha=0.3, top_k=60):
     """Initialize the chatbot with Pinecone index and embeddings."""
     pc = Pinecone(api_key=PINECONE_API_KEY)
-    INDEX_NAME = "persian-new"
+    INDEX_NAME = "persian-test"
 
     embeddings = OpenAIEmbeddings(model="text-embedding-3-large", api_key=OPENAI_API_KEY)
     index = pc.Index(INDEX_NAME)
