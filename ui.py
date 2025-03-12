@@ -192,12 +192,32 @@ st.markdown("""
             text-align: right;
             direction: rtl;
         }
-        .query-enhancement-toggle {
-            margin-top: 10px;
-            margin-bottom: 15px;
-            padding: 10px;
+        /* Custom styling for toggle container */
+        .custom-container {
             background-color: #f0f2f6;
             border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+        /* Ensure checkbox label is properly aligned in RTL */
+        .stCheckbox [data-testid="stMarkdownContainer"] {
+            text-align: right !important;
+            direction: rtl !important;
+        }
+        /* For better alignment in radio buttons */
+        .stRadio [data-testid="stMarkdownContainer"] {
+            text-align: right !important;
+            direction: rtl !important;
+        }
+        /* Bold text for toggle label */
+        .toggle-label {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .toggle-description {
+            margin-top: 5px;
+            color: #4a4a4a;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -283,40 +303,63 @@ def main():
             
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # Model selection only
     # Model selection
     model_options = {
         "gpt-4o-mini": "GPT-4o Mini",
         "gpt-4o": "GPT-4o",
         "o3-mini": "O3 Mini",
         "o1": "O1",
+
     }
     
-    selected_model = st.selectbox(
-        "انتخاب مدل هوش مصنوعی:",
-        options=list(model_options.keys()),
-        format_func=lambda x: model_options[x],
-        index=list(model_options.keys()).index(st.session_state.model_name)
+    col1, col2 = st.columns([2, 1])  # Adjusted column width ratio
+    
+    with col1:
+        selected_model = st.selectbox(
+            "انتخاب مدل هوش مصنوعی:",
+            options=list(model_options.keys()),
+            format_func=lambda x: model_options[x],
+            index=list(model_options.keys()).index(st.session_state.model_name)
+        )
+        # Update session state with selected model
+        st.session_state.model_name = selected_model
+    
+    # Improved Query Enhancement Toggle with Radio Buttons
+    st.markdown("<div class='custom-container'>", unsafe_allow_html=True)
+    
+    st.markdown('<p class="toggle-label">بهبود پرسش‌ها با هوش مصنوعی:</p>', unsafe_allow_html=True)
+    
+    enhancement_options = {
+        True: "فعال - استفاده از هوش مصنوعی برای غنی‌سازی پرسش‌ها",
+        False: "غیرفعال - استفاده از پرسش‌های اصلی بدون تغییر"
+    }
+    
+    selected_option = st.radio(
+        "",  # Empty label since we use custom HTML label above
+        options=list(enhancement_options.keys()),
+        format_func=lambda x: enhancement_options[x],
+        index=1 if not st.session_state.use_query_enhancement else 0,
+        horizontal=True,
+        key="query_enhancement_radio"
     )
     
-    # Update session state with selected model
-    st.session_state.model_name = selected_model
-
-    # Query Enhancement Toggle Button
-    st.markdown("<div class='query-enhancement-toggle'>", unsafe_allow_html=True)
+    # Update session state with selected enhancement option
+    st.session_state.use_query_enhancement = selected_option
     
-    # Using two columns for the toggle switch layout
-    
-    query_enhancement_enabled = st.toggle(
-            "بهبود پرسش ",
-            value=st.session_state.use_query_enhancement,
-            key="query_enhancement_toggle"
-        )
-    
-    
-    
-    # Update session state with toggle value
-    st.session_state.use_query_enhancement = query_enhancement_enabled
+    # Description based on selected option
+    if st.session_state.use_query_enhancement:
+        st.markdown("""
+            <p class="toggle-description">
+            با فعال بودن این گزینه، هوش مصنوعی پرسش‌های شما را با افزودن کلمات کلیدی و مفاهیم مرتبط غنی‌سازی می‌کند 
+            تا نتایج جستجوی دقیق‌تری ارائه دهد.
+            </p>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+            <p class="toggle-description">
+            با غیرفعال بودن این گزینه، پرسش‌های شما بدون هیچ تغییری برای جستجو استفاده می‌شوند.
+            </p>
+        """, unsafe_allow_html=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
 
