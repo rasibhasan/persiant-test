@@ -306,28 +306,14 @@ def main():
     st.markdown("<div class='query-enhancement-toggle'>", unsafe_allow_html=True)
     
     # Using two columns for the toggle switch layout
-    col1, col2 = st.columns([2, 3])
     
-    with col1:
-        query_enhancement_enabled = st.toggle(
+    query_enhancement_enabled = st.toggle(
             "بهبود پرسش ",
             value=st.session_state.use_query_enhancement,
             key="query_enhancement_toggle"
         )
     
-    with col2:
-        if query_enhancement_enabled:
-            st.markdown("""
-                <div style="padding: 5px; font-size: 14px;">
-                پرسش‌های شما با استفاده از هوش مصنوعی غنی‌سازی می‌شوند تا نتایج بهتری بدست آید.
-                </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-                <div style="padding: 5px; font-size: 14px;">
-                پرسش‌های شما بدون تغییر و غنی‌سازی استفاده می‌شوند.
-                </div>
-            """, unsafe_allow_html=True)
+    
     
     # Update session state with toggle value
     st.session_state.use_query_enhancement = query_enhancement_enabled
