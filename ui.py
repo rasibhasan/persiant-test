@@ -310,7 +310,7 @@ def main():
     
     with col1:
         query_enhancement_enabled = st.toggle(
-            "بهبود پرسش با هوش مصنوعی",
+            "بهبود پرسش ",
             value=st.session_state.use_query_enhancement,
             key="query_enhancement_toggle"
         )
