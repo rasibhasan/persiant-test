@@ -219,6 +219,10 @@ st.markdown("""
             margin-top: 5px;
             color: #4a4a4a;
         }
+        .custom-container:empty {
+            display: none;
+        }
+
     </style>
 """, unsafe_allow_html=True)
 
