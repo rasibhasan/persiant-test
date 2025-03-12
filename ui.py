@@ -72,8 +72,8 @@ def enhance_query(query, model_name):
     
     return enhanced_query
 
-def create_chatbot_retrieval_qa(main_query, additional_note, vs, categories, sub_categories, model_name):
-    """Modified to handle query enhancement and model selection."""
+def create_chatbot_retrieval_qa(main_query, additional_note, vs, categories, sub_categories, model_name, use_query_enhancement):
+    """Modified to handle query enhancement toggle and model selection."""
     prompt_template = """
     شما یک دستیار هوشمند و مفید هستید. با استفاده از متن زیر به پرسش مطرح‌شده با دقت، شفافیت، و به صورت کامل پاسخ دهید:
     1. پاسخ را **به زبان فارسی** ارائه دهید.
@@ -104,11 +104,15 @@ def create_chatbot_retrieval_qa(main_query, additional_note, vs, categories, sub
             if sub_categories:
                 filter_dict["year"] = {"$in": sub_categories}
         
-        # Always enhance the query
-        enhanced_query = enhance_query(query, model_name)
+        # Apply query enhancement only if enabled
+        if use_query_enhancement:
+            enhanced_query = enhance_query(query, model_name)
+            retrieval_query = enhanced_query
+        else:
+            retrieval_query = query
         
         return vs.get_relevant_documents(
-            enhanced_query,
+            retrieval_query,
             filter=filter_dict
         )
 
@@ -188,6 +192,13 @@ st.markdown("""
             text-align: right;
             direction: rtl;
         }
+        .query-enhancement-toggle {
+            margin-top: 10px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f0f2f6;
+            border-radius: 10px;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -218,6 +229,8 @@ def main():
         st.session_state.vectorstore = None
     if 'model_name' not in st.session_state:
         st.session_state.model_name = "gpt-4o-mini"
+    if 'use_query_enhancement' not in st.session_state:
+        st.session_state.use_query_enhancement = True
 
     # Predefined categories
     with open("folder_structure.json", "r", encoding="utf-8") as file:
@@ -274,6 +287,7 @@ def main():
     # Model selection
     model_options = {
         "gpt-4o-mini": "GPT-4o Mini",
+        "gpt-4o": "GPT-4o",
         "o3-mini": "O3 Mini",
         "o1": "O1",
     }
@@ -287,6 +301,38 @@ def main():
     
     # Update session state with selected model
     st.session_state.model_name = selected_model
+
+    # Query Enhancement Toggle Button
+    st.markdown("<div class='query-enhancement-toggle'>", unsafe_allow_html=True)
+    
+    # Using two columns for the toggle switch layout
+    col1, col2 = st.columns([1, 4])
+    
+    with col1:
+        query_enhancement_enabled = st.toggle(
+            "بهبود پرسش با هوش مصنوعی",
+            value=st.session_state.use_query_enhancement,
+            key="query_enhancement_toggle"
+        )
+    
+    with col2:
+        if query_enhancement_enabled:
+            st.markdown("""
+                <div style="padding: 5px; font-size: 14px;">
+                پرسش‌های شما با استفاده از هوش مصنوعی غنی‌سازی می‌شوند تا نتایج بهتری بدست آید.
+                </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown("""
+                <div style="padding: 5px; font-size: 14px;">
+                پرسش‌های شما بدون تغییر و غنی‌سازی استفاده می‌شوند.
+                </div>
+            """, unsafe_allow_html=True)
+    
+    # Update session state with toggle value
+    st.session_state.use_query_enhancement = query_enhancement_enabled
+    
+    st.markdown("</div>", unsafe_allow_html=True)
 
     # Initialize chatbot if needed
     if st.session_state.vectorstore is None:
@@ -328,7 +374,8 @@ def main():
     )
 
     # Display current model and settings
-    settings_info = f"مدل انتخاب شده: {model_options[st.session_state.model_name]} | بهبود پرسش با هوش مصنوعی: فعال"
+    enhancement_status = "فعال" if st.session_state.use_query_enhancement else "غیرفعال"
+    settings_info = f"مدل انتخاب شده: {model_options[st.session_state.model_name]} | بهبود پرسش با هوش مصنوعی: {enhancement_status}"
     st.info(settings_info)
 
     # Submit button
@@ -363,7 +410,8 @@ def main():
                     st.session_state.vectorstore,
                     categories,
                     sub_categories,
-                    st.session_state.model_name  # Pass the selected model
+                    st.session_state.model_name,
+                    st.session_state.use_query_enhancement  # Pass the enhancement toggle state
                 )
                 
                 # Update progress for processing
