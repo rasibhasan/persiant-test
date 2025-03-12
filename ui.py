@@ -306,7 +306,7 @@ def main():
     st.markdown("<div class='query-enhancement-toggle'>", unsafe_allow_html=True)
     
     # Using two columns for the toggle switch layout
-    col1, col2 = st.columns([1, 4])
+    col1, col2 = st.columns([2, 3])
     
     with col1:
         query_enhancement_enabled = st.toggle(
