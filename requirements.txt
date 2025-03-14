@@ -2,7 +2,7 @@ streamlit
 openai
 langchain
 langchain_openai
-pinecone
+pinecone-client
 langchain_community
 pinecone-text
 huggingface-hub
